@@ -11,5 +11,12 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <map>
+#include <string>
+#include <fstream>
+#include <dirent.h>
+#include <regex.h>
 
+using namespace std;
+void build_index(const char * argument);
 #endif /* a3search_h */
