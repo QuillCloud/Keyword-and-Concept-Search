@@ -7,14 +7,26 @@
 //
 
 #include "a3search.h"
-int k = 2003256;
-char read[2003256];
+#include "porter2_stemmer.h"
+
+
+
+int kcloud = 2003256;
+char readfile[2003256];
 int main(int argc, const char * argv[]) {
-    build_index(argv[1]);
+    if (argc < 3) {
+        return 0;
+    }
+    DIR *indexfile;
+    if((indexfile = opendir(argv[2]))) {
+        cout<<"indexfile"<<endl;
+    }
+    else {
+        build_index(argv[1], argv[2]);
+    }
     return 0;
 }
-
-void build_index(const char * argument) {
+void build_index(const char * argument1, const char * argument2) {
     char name[300];
     char word[257];
     DIR *pDIR;
@@ -30,7 +42,7 @@ void build_index(const char * argument) {
     /*
         read files in folder
      */
-    if((pDIR = opendir(argument))) {
+    if((pDIR = opendir(argument1))) {
         entry = readdir(pDIR);
         if (entry == NULL) {
             return;
@@ -39,14 +51,14 @@ void build_index(const char * argument) {
             /*
                 read each file except . and ..
              */
-            if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-                strcpy(name, argument);
+            if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, ".DS_Store") != 0) {
+                strcpy(name, argument1);
                 strcat(name, "/");
                 strcat(name, entry->d_name);
+                cout<<name<<endl;
                 file_in = fopen(name, "r");
                 file_number++;
                 while (fscanf(file_in, " %256s", word) == 1) {
-                    
                     for (i = 0; i < strlen(word); i++) {
                         if (word[i] >= 'A' and word[i] <= 'Z') {
                             word[i] = tolower(word[i]);
@@ -55,12 +67,14 @@ void build_index(const char * argument) {
                             word[i] = '\0';
                         }
                     }
+                    index_word = word;
+                    Porter2Stemmer::stem(index_word);
                     if (strlen(word) < 3) continue;
-                    if (word_list.find(word) == word_list.end()) {
-                        word_list[word] = 1;
+                    if (word_list.find(index_word) == word_list.end()) {
+                        word_list[index_word] = 1;
                     }
                     else {
-                        word_list[word]++;
+                        word_list[index_word]++;
                     }
                 }
                 fclose(file_in);
@@ -77,12 +91,19 @@ void build_index(const char * argument) {
                 if it is the last file
              */
             if (entry == NULL) {
+                strcpy(name, "mkdir ");
+                strcat(name, argument2);
+                system(name);
                 /*
-                    if it is the first file(only one file)
+                    if it is also the first file(means only one file)
                  */
                 if (file_number == 1) {
-                    index_write = fopen(index[file_number%2], "w");
-                    total_word = fopen("word", "w");
+                    strcpy(name, argument2);
+                    strcat(name, "/index");
+                    index_write = fopen(name, "w");
+                    strcpy(name, argument2);
+                    strcat(name, "/word");
+                    total_word = fopen(name, "w");
                     i = 1;
                     for (MapIterator iter = word_list.begin(); iter != word_list.end(); iter++) {
                         if (iter->second != 0) {
@@ -100,43 +121,49 @@ void build_index(const char * argument) {
                  */
                 else {
                     index_read = fopen(index[(file_number-1)%2], "r");
-                    index_write = fopen(index[file_number%2], "w");
-                    total_word = fopen("word", "w");
-                    fgets(read, k, index_read);
-                    index_word = read;
+                    strcpy(name, argument2);
+                    strcat(name, "/index");
+                    index_write = fopen(name, "w");
+                    strcpy(name, argument2);
+                    strcat(name, "/word");
+                    total_word = fopen(name, "w");
+                    fgets(readfile, kcloud, index_read);
+                    index_word = readfile;
                     index_word = index_word.substr(0, index_word.find(" "));
                     i = 1;
+                    int j = 1;
                     for (MapIterator iter = word_list.begin(); iter != word_list.end(); iter++) {
                         if (iter->first == index_word) {
-                            
                             fprintf(total_word, "%d%s", i, index_word.c_str());
                             if(iter->second == 0) {
-                                posting_list = read;
+                                posting_list = readfile;
                                 location = posting_list.find(" ") + 1;
-                                posting_list = posting_list.substr( location, strlen(read) - location);
+                                posting_list = posting_list.substr( location, strlen(readfile) - location);
                                 fprintf(index_write, "%s", posting_list.c_str());
                             }
                             else {
-                                read[strlen(read) - 1] = '\0';
-                                posting_list = read;
+                                readfile[strlen(readfile) - 1] = '\0';
+                                posting_list = readfile;
                                 location = posting_list.find(" ") + 1;
                                 posting_list = posting_list.substr(location, 5);
                                 posting_list = posting_list.substr(0, posting_list.find("-"));
                                 last_number = atoi(posting_list.c_str());
                                 last_number = file_number - last_number;
-                                posting_list = read;
+                                posting_list = readfile;
                                 location = posting_list.find(" ") + 1;
-                                posting_list = posting_list.substr(location, strlen(read) - location);
+                                posting_list = posting_list.substr(location, strlen(readfile) - location);
                                 fprintf(index_write, "%s %d-%d\n", posting_list.c_str(), last_number, iter->second);
                             }
-                            fgets(read, k, index_read);
-                            index_word = read;
+                            fgets(readfile, kcloud, index_read);
+                            index_word = readfile;
                             index_word = index_word.substr(0, index_word.find(" "));
+                            j++;
                         }
                         else {
                             fprintf(total_word, "%d%s", i, iter->first.c_str());
                             fprintf(index_write, "%d-%d\n", file_number, iter->second);
                         }
+                        
                         word_list[iter->first] = 0;
                         i++;
                     }
@@ -161,34 +188,34 @@ void build_index(const char * argument) {
                 }
                 fclose(index_write);
             }
-            
             // if it is not the first file
             else {
                 index_read = fopen(index[(file_number-1)%2], "r");
                 index_write = fopen(index[file_number%2], "w");
-                fgets(read, k, index_read);
-                index_word = read;
+                fgets(readfile, kcloud, index_read);
+                index_word = readfile;
                 index_word = index_word.substr(0, index_word.find(" "));
                 for (MapIterator iter = word_list.begin(); iter != word_list.end(); iter++) {
                     if (iter->first == index_word) {
                         if(iter->second == 0) {
-                            fprintf(index_write, "%s", read);
+                            fprintf(index_write, "%s", readfile);
                         }
                         else {
-                            read[strlen(read) - 1] = '\0';
-                            posting_list = read;
+                            readfile[strlen(readfile) - 1] = '\0';
+                            posting_list = readfile;
                             location = posting_list.find(" ") + 1;
                             posting_list = posting_list.substr(location, 5);
                             posting_list = posting_list.substr(0, posting_list.find("-"));
                             last_number = atoi(posting_list.c_str());
                             last_number = file_number - last_number;
-                            fprintf(index_write, "%s %d-%d\n", read, last_number,iter->second);
+                            fprintf(index_write, "%s %d-%d\n", readfile, last_number,iter->second);
                         }
-                        fgets(read, k, index_read);
-                        index_word = read;
+                        fgets(readfile, kcloud, index_read);
+                        index_word = readfile;
                         index_word = index_word.substr(0, index_word.find(" "));
                     }
                     else {
+                        
                         fprintf(index_write, "%s %d-%d\n", iter->first.c_str(), file_number,iter->second);
                     }
                     word_list[iter->first] = 0;
@@ -197,7 +224,9 @@ void build_index(const char * argument) {
                 fclose(index_read);
             }
         }
-        remove(index[(file_number - 1)%2]);
+        cout<<word_list.size()<<endl;
+        remove(index[0]);
+        remove(index[1]);
         closedir(pDIR);
     }
 }

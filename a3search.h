@@ -9,6 +9,7 @@
 #ifndef a3search_h
 #define a3search_h
 
+
 #include <stdio.h>
 #include <iostream>
 #include <map>
@@ -18,5 +19,5 @@
 #include <regex.h>
 
 using namespace std;
-void build_index(const char * argument);
+void build_index(const char * argument1, const char * argument2);
 #endif /* a3search_h */
