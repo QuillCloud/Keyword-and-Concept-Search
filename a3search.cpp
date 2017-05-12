@@ -28,7 +28,13 @@ int main(int argc, const char * argv[]) {
 }
 void build_index(const char * argument1, const char * argument2) {
     char name[300];
-    char word[257];
+    const char* stopword[] =
+    {   "about", "above", "after", "again", "against", "all", "and", "ani", "are", "becaus", "been", "befor", "below", "between", "both", "but", "can", "cannot", "could", "did", "doe", "down", "each", "few",
+        "for", "from", "had", "has", "have", "him", "his", "how","her", "into", "most", "more", "not", "onli", "veri",
+        "too", "they", "the", "such", "should", "some", "such", "than", "that", "were", "their", "then", "there",
+        "those", "what", "which", "while", "whi", "where", "when", "who", "whom", "you", "would", "your", "with",
+        "these", "she", "other", "our", };
+    char * word;
     DIR *pDIR;
     FILE *file_in, *index_read, *index_write, *total_word;
     struct dirent *entry;
@@ -55,26 +61,36 @@ void build_index(const char * argument1, const char * argument2) {
                 strcpy(name, argument1);
                 strcat(name, "/");
                 strcat(name, entry->d_name);
-                cout<<name<<endl;
                 file_in = fopen(name, "r");
+                cout<<name<<endl;
                 file_number++;
-                while (fscanf(file_in, " %256s", word) == 1) {
-                    for (i = 0; i < strlen(word); i++) {
-                        if (word[i] >= 'A' and word[i] <= 'Z') {
-                            word[i] = tolower(word[i]);
+                int debug = 0;
+                while(fgets(readfile, kcloud, file_in) != NULL) {
+                    debug++;
+                    word = strtok(readfile, " ");
+                    while(word != NULL) {
+                        for (i = 0; i < strlen(word); i++) {
+                            if (word[i] >= 'A' and word[i] <= 'Z') {
+                                word[i] = tolower(word[i]);
+                            }
+                            else if (word[i] < 'a' or word[i] > 'z') {
+                                word[i] = '\0';
+                            }
                         }
-                        else if (word[i] < 'a' or word[i] > 'z') {
-                            word[i] = '\0';
+                        index_word = word;
+                        Porter2Stemmer::stem(index_word);
+                        if (strlen(word) < 3) {
+                            word = strtok(NULL, " ");
+                            continue;
                         }
-                    }
-                    index_word = word;
-                    Porter2Stemmer::stem(index_word);
-                    if (strlen(word) < 3) continue;
-                    if (word_list.find(index_word) == word_list.end()) {
-                        word_list[index_word] = 1;
-                    }
-                    else {
-                        word_list[index_word]++;
+                        if (word_list.find(index_word) == word_list.end()) {
+                            word_list[index_word] = 1;
+                        }
+                        else {
+                            word_list[index_word]++;
+                        }
+                        word = strtok(NULL, " ");
+                        
                     }
                 }
                 fclose(file_in);
@@ -224,7 +240,6 @@ void build_index(const char * argument1, const char * argument2) {
                 fclose(index_read);
             }
         }
-        cout<<word_list.size()<<endl;
         remove(index[0]);
         remove(index[1]);
         closedir(pDIR);
