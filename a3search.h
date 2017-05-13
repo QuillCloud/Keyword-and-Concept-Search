@@ -17,6 +17,7 @@
 #include <fstream>
 #include <dirent.h>
 #include <regex.h>
+#include <cstring>
 
 using namespace std;
 void build_index(const char * argument1, const char * argument2);
