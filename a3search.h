@@ -18,6 +18,8 @@
 #include <dirent.h>
 #include <regex.h>
 #include <cstring>
+#include <algorithm>
+#include <iterator>
 
 using namespace std;
 void build_index(const char * argument1, const char * argument2);

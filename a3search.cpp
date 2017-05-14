@@ -11,8 +11,6 @@
 
 
 
-int kcloud = 2003256;
-char readfile[2003256];
 int main(int argc, const char * argv[]) {
     if (argc < 3) {
         return 0;
@@ -27,16 +25,19 @@ int main(int argc, const char * argv[]) {
     return 0;
 }
 void build_index(const char * argument1, const char * argument2) {
+    int kcloud = 2003256;
+    char readfile[kcloud];
     char name[300];
     const char* stopword[] =
     {   "about", "above", "after", "again", "against", "all", "and", "ani", "are", "becaus", "been", "befor", "below", "between", "both", "but", "can", "cannot", "could", "did", "doe", "down", "each", "few",
         "for", "from", "had", "has", "have", "him", "his", "how","her", "into", "most", "more", "not", "onli", "veri",
         "too", "they", "the", "such", "should", "some", "such", "than", "that", "were", "their", "then", "there",
         "those", "what", "which", "while", "whi", "where", "when", "who", "whom", "you", "would", "your", "with",
-        "these", "she", "other", "our", };
+        "these", "she", "other", "our", "it", "go", "be", "do", "ad", "a", "in", "up", "aw"};
     char * word;
     DIR *pDIR;
-    FILE *file_in, *index_read, *index_write, *total_word;
+    FILE *file_in, *index_read, *index_write, *total_word, *write_filename;
+    string file_name[2000];
     struct dirent *entry;
     int i, last_number;
     unsigned long location;
@@ -45,6 +46,7 @@ void build_index(const char * argument1, const char * argument2) {
     typedef map<string, int>::const_iterator MapIterator;
     int file_number = 0;
     string index_word, posting_list, previous_word;
+    char delim[] = "-; ,<>1234567890#*?.[]\\/$%^&()!@+=_~`{}|\"";
     /*
         read files in folder
      */
@@ -62,25 +64,31 @@ void build_index(const char * argument1, const char * argument2) {
                 strcat(name, "/");
                 strcat(name, entry->d_name);
                 file_in = fopen(name, "r");
-                cout<<name<<endl;
+                file_name[file_number] = entry->d_name;
                 file_number++;
-                int debug = 0;
                 while(fgets(readfile, kcloud, file_in) != NULL) {
-                    debug++;
-                    word = strtok(readfile, " ");
+                    word = strtok(readfile, delim);
                     while(word != NULL) {
-                        for (i = 0; i < strlen(word); i++) {
-                            if (word[i] >= 'A' and word[i] <= 'Z') {
-                                word[i] = tolower(word[i]);
-                            }
-                            else if (word[i] < 'a' or word[i] > 'z') {
-                                word[i] = '\0';
-                            }
+                        if (strlen(word) < 3) {
+                            word = strtok(NULL, delim);
+                            continue;
                         }
                         index_word = word;
+                        for (i = (int)strlen(index_word.c_str()); i >= 0; i--) {
+                            if (index_word[i] >= 'A' and index_word[i] <= 'Z') {
+                                index_word[i] = tolower(index_word[i]);
+                            }
+                            else if (index_word[i] < 'a' or index_word[i] > 'z') {
+                                index_word.erase(i, 1);
+                            }
+                        }
+                        if (strlen(index_word.c_str()) < 3) {
+                            word = strtok(NULL, delim);
+                            continue;
+                        }
                         Porter2Stemmer::stem(index_word);
-                        if (strlen(word) < 3) {
-                            word = strtok(NULL, " ");
+                        if ((find(begin(stopword), end(stopword), index_word) != end(stopword))) {
+                            word = strtok(NULL, delim);
                             continue;
                         }
                         if (word_list.find(index_word) == word_list.end()) {
@@ -89,7 +97,7 @@ void build_index(const char * argument1, const char * argument2) {
                         else {
                             word_list[index_word]++;
                         }
-                        word = strtok(NULL, " ");
+                        word = strtok(NULL, delim);
                         
                     }
                 }
@@ -110,6 +118,12 @@ void build_index(const char * argument1, const char * argument2) {
                 strcpy(name, "mkdir ");
                 strcat(name, argument2);
                 system(name);
+                strcpy(name, argument2);
+                strcat(name, "/files");
+                write_filename = fopen(name, "w");
+                for (i = 0; i < file_number; i++) {
+                    fprintf(write_filename, "%s\n", file_name[i].c_str());
+                }
                 /*
                     if it is also the first file(means only one file)
                  */
