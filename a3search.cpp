@@ -12,16 +12,20 @@
 
 
 int main(int argc, const char * argv[]) {
-    if (argc < 3) {
+    if (argc < 4) {
         return 0;
     }
-    DIR *indexfile;
-    if((indexfile = opendir(argv[2]))) {
-        cout<<"indexfile"<<endl;
+    string terms[argc - 3];
+    int j;
+    for (j = 0; j < argc - 3; j++) {
+        terms[j] = argv[j+3];
+        Porter2Stemmer::stem(terms[j]);
     }
-    else {
+    DIR *indexfile;
+    if(!(indexfile = opendir(argv[2]))) {
         build_index(argv[1], argv[2]);
     }
+    search_terms(argv[2], terms, argc - 3);
     return 0;
 }
 void build_index(const char * argument1, const char * argument2) {
@@ -40,7 +44,7 @@ void build_index(const char * argument1, const char * argument2) {
     string file_name[2000];
     struct dirent *entry;
     int i, last_number;
-    unsigned long location;
+    unsigned long location, seek_location;
     static const char* const index[] = {"index1", "index2"};
     map<string, int> word_list;
     typedef map<string, int>::const_iterator MapIterator;
@@ -134,12 +138,12 @@ void build_index(const char * argument1, const char * argument2) {
                     strcpy(name, argument2);
                     strcat(name, "/word");
                     total_word = fopen(name, "w");
-                    i = 1;
+                    seek_location = 0;
                     for (MapIterator iter = word_list.begin(); iter != word_list.end(); iter++) {
                         if (iter->second != 0) {
+                            fprintf(total_word, "%lu-%s ", seek_location, iter->first.c_str());
                             fprintf(index_write, "%d-%d\n", file_number,iter->second);
-                            fprintf(total_word, "%d%s", i, iter->first.c_str());
-                            i++;
+                            seek_location += get_length(file_number) + get_length(iter->second) + 2;
                             word_list[iter->first] = 0;
                         }
                     }
@@ -160,16 +164,16 @@ void build_index(const char * argument1, const char * argument2) {
                     fgets(readfile, kcloud, index_read);
                     index_word = readfile;
                     index_word = index_word.substr(0, index_word.find(" "));
-                    i = 1;
-                    int j = 1;
+                    seek_location = 0;
                     for (MapIterator iter = word_list.begin(); iter != word_list.end(); iter++) {
                         if (iter->first == index_word) {
-                            fprintf(total_word, "%d%s", i, index_word.c_str());
+                            fprintf(total_word, "%lu-%s ",seek_location, iter->first.c_str());
                             if(iter->second == 0) {
                                 posting_list = readfile;
                                 location = posting_list.find(" ") + 1;
                                 posting_list = posting_list.substr( location, strlen(readfile) - location);
                                 fprintf(index_write, "%s", posting_list.c_str());
+                                seek_location += strlen(posting_list.c_str());
                             }
                             else {
                                 readfile[strlen(readfile) - 1] = '\0';
@@ -183,19 +187,18 @@ void build_index(const char * argument1, const char * argument2) {
                                 location = posting_list.find(" ") + 1;
                                 posting_list = posting_list.substr(location, strlen(readfile) - location);
                                 fprintf(index_write, "%s %d-%d\n", posting_list.c_str(), last_number, iter->second);
+                                seek_location += strlen(posting_list.c_str()) + get_length(last_number) + get_length(iter->second) + 3;
                             }
                             fgets(readfile, kcloud, index_read);
                             index_word = readfile;
                             index_word = index_word.substr(0, index_word.find(" "));
-                            j++;
                         }
                         else {
-                            fprintf(total_word, "%d%s", i, iter->first.c_str());
+                            fprintf(total_word, "%lu-%s ",seek_location, iter->first.c_str());
                             fprintf(index_write, "%d-%d\n", file_number, iter->second);
+                            seek_location += get_length(file_number) + get_length(iter->second) + 2;
                         }
-                        
                         word_list[iter->first] = 0;
-                        i++;
                     }
                     fclose(index_write);
                     fclose(index_read);
@@ -245,7 +248,6 @@ void build_index(const char * argument1, const char * argument2) {
                         index_word = index_word.substr(0, index_word.find(" "));
                     }
                     else {
-                        
                         fprintf(index_write, "%s %d-%d\n", iter->first.c_str(), file_number,iter->second);
                     }
                     word_list[iter->first] = 0;
@@ -258,4 +260,70 @@ void build_index(const char * argument1, const char * argument2) {
         remove(index[1]);
         closedir(pDIR);
     }
+}
+
+void search_terms(const char * argument2, string search_terms[], int number_of_term) {
+    int k = 2003256;
+    char read[k];
+    FILE *read_word, *read_index, *read_files;
+    char name[300];
+    char word[256];
+    int posting_list[5][2000] = {0};
+    int occur_times[5][2000] = {0};
+    int len_of_pl[5] = {0};
+    int seek_location, i, j, word_count, file_count;
+    char * single_of_pl;
+    string get_word, index_word;
+    strcpy(name, argument2);
+    strcat(name, "/word");
+    read_word = fopen(name, "r");
+    strcpy(name, argument2);
+    strcat(name, "/index");
+    read_index = fopen(name, "r");
+    strcpy(name, argument2);
+    strcat(name, "/files");
+    read_files = fopen(name, "r");
+    word_count = 0;
+    while(fscanf(read_word, "%s", word) != EOF) {
+        get_word = word;
+        seek_location = atoi(get_word.substr(0, get_word.find("-")).c_str());
+        get_word = get_word.substr(get_word.find("-") + 1, strlen(word) - get_word.find("-")).c_str();
+        for (i = 0; i < number_of_term; i++) {
+            if (search_terms[i] == get_word.c_str()) {
+                fseek(read_index, seek_location, SEEK_SET);
+                fgets(read, k, read_index);
+                single_of_pl = strtok(read, " ");
+                file_count = 0;
+                while (single_of_pl != NULL) {
+                    index_word = single_of_pl;
+                    posting_list[word_count][file_count] = atoi(index_word.substr(0, index_word.find("-")).c_str());
+                    occur_times[word_count][file_count] = atoi(index_word.substr(index_word.find("-") + 1, strlen(index_word.c_str()) - index_word.find("-")).c_str());
+                    if (file_count != 0) {
+                        posting_list[word_count][file_count] += posting_list[word_count][0];
+                    }
+                    single_of_pl = strtok(NULL, " ");
+                    file_count++;
+                }
+                len_of_pl[word_count] = file_count;
+                word_count++;
+            }
+        }
+    }
+    for (i = 0; i < word_count; i++) {
+        for (j = 0; j < len_of_pl[i]; j++) {
+            cout<<posting_list[i][j]<<"-"<<occur_times[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+}
+
+int get_length(int x)
+{
+    int leng=0;
+    while(x)
+    {
+        x/=10;
+        leng++;
+    }
+    return leng;
 }
