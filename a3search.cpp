@@ -203,6 +203,7 @@ void build_index(const char * argument1, const char * argument2) {
                     fclose(index_write);
                     fclose(index_read);
                     fclose(total_word);
+                    fclose(write_filename);
                 }
                 break;
             }
@@ -309,12 +310,112 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
             }
         }
     }
-    for (i = 0; i < word_count; i++) {
-        for (j = 0; j < len_of_pl[i]; j++) {
-            cout<<posting_list[i][j]<<"-"<<occur_times[i][j]<<" ";
-        }
-        cout<<endl;
+    if (word_count < number_of_term) {
+        return;
     }
+    int result_pl[2000];
+    int result_fre[2000];
+    int current_pl[2000];
+    int current_fre[2000];
+    int compare[word_count];
+    for (i = 0; i < word_count; i++) {
+        compare[i] = -1;
+    }
+    int j2;
+    int smallest;
+    int flag;
+    for (i = 0; i < word_count; i++) {
+        smallest = -1;
+        for (j = 0; j < word_count; j++) {
+            flag = 0;
+            for (j2 = 0; j2 < i; j2++) {
+                if(compare[j2] == j) {
+                    flag = 1;
+                }
+            }
+            if (flag == 1) {
+                continue;
+            }
+            if (smallest == -1) {
+                smallest = len_of_pl[j];
+                compare[i] = j;
+            }
+            else if (smallest > len_of_pl[j]) {
+                smallest = len_of_pl[j];
+                compare[i] = j;
+            }
+        }
+    }
+    int m, n;
+    int len1, len2;
+    int result_len;
+    memcpy(&current_pl, &posting_list[compare[0]], len_of_pl[compare[0]]*sizeof(int));
+    memcpy(&current_fre, &occur_times[compare[0]], len_of_pl[compare[0]]*sizeof(int));
+    len1 = len_of_pl[compare[0]];
+    result_len = len1;
+    for (i = 1; i < word_count; i++) {
+        len2 = len_of_pl[compare[i]];
+        m = 0;
+        n = 0;
+        result_len = 0;
+        
+        while (m < len2 and n < len1) {
+            if (posting_list[compare[i]][m] == current_pl[n]){
+                result_pl[result_len] = posting_list[compare[i]][m];
+                result_fre[result_len] = occur_times[compare[i]][m] + current_fre[n];
+                result_len++;
+                m++;
+                n++;
+            }
+            else if (posting_list[compare[i]][m] < current_pl[n]) {
+                m++;
+            }
+            else if (posting_list[compare[i]][m] > current_pl[n]) {
+                n++;
+            }
+        }
+        memcpy(&current_pl, &result_pl, result_len*sizeof(int));
+        memcpy(&current_fre, &result_fre, result_len*sizeof(int));
+        len1 = result_len;
+    }
+    int result_sequence[result_len];
+    int largest;
+    for (i = 0; i < result_len; i++) {
+        largest = - 1;
+        for (j = 0; j < result_len; j++) {
+            flag = 1;
+            for (j2 = 0; j2 < i; j2++) {
+                if (result_sequence[j2] == j) {
+                    flag = 0;
+                }
+            }
+            if (flag == 0) {
+                continue;
+            }
+            if(current_fre[j] > largest) {
+                largest = current_fre[j];
+                result_sequence[i] = j;
+            }
+        }
+    }
+    string f_name[result_len];
+    
+    int c = 0;
+    i = 0;
+    while (i < result_len) {
+        fscanf(read_files, "%s", name);
+        c++;
+        if (c == current_pl[i]) {
+            f_name[i] = name;
+            i++;
+        }
+    }
+    for (i = 0; i < result_len; i++) {
+        cout<<f_name[result_sequence[i]]<<endl;
+    }
+    fclose(read_word);
+    fclose(read_files);
+    fclose(read_index);
 }
 
 int get_length(int x)
