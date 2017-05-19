@@ -1,9 +1,17 @@
 C=g++
 CFLAGS=-std=c++11 -O3
-all: a3search
 
-a3search: a3search.h a3search.cpp porter2_stemmer.h porter2_stemmer.cpp
-	$(C) $(CFLAGS) -o a3search a3search.cpp porter2_stemmer.cpp
+a3search: a3search.o porter2_stemmer.o
+	$(C) $(CFLAGS) a3search.o porter2_stemmer.o -o a3search
+
+porter2_stemmer.o: porter2_stemmer.cpp porter2_stemmer.h
+	$(C) $(CFLAGS) -c porter2_stemmer.cpp
+
+a3search.o: a3search.cpp a3search.h
+	$(C) $(CFLAGS) -c a3search.cpp
+	
+
+
 
 clean:
-	rm a3search
+	rm *.o a3search
