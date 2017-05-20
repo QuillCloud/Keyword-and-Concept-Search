@@ -311,6 +311,7 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
         }
     }
     if (word_count < number_of_term) {
+        cout<<endl;
         return;
     }
     int result_pl[2000];
