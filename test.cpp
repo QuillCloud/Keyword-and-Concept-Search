@@ -8,27 +8,16 @@
 
 /* strtok example */
 #include <stdio.h>
-#include <iostream>
-#include <map>
-#include <string>
-#include <fstream>
-#include <dirent.h>
-#include <regex.h>
-#include <algorithm> // for std::find
-#include <iterator> // for std::begin, std::end
 #include "wn.h"
-using namespace std;
 
-int main ()
-{
-    int a[] = {3, 6, 8, 33};
-    int x = 3;
-    if ((find(std::begin(a), end(a), x) != end(a))) {
-        cout<<"in"<<endl;
-    }
-    else {
-        cout<<"not in"<<endl;
-    }
+int main() {
+    
+    char str[] = "investment";
+    
+    SynsetPtr synsets;
+    
+    synsets = findtheinfo_ds(str, NOUN, HYPOPTR, ALLSENSES);
+    
+    return 0;
     
 }
-
