@@ -9,7 +9,7 @@
 #ifndef NULL
 #define NULL	0
 #endif
-
+#include "wn.h"
 char *wnrelease = "3.0";
 
 /* Lexicographer file names and numbers */
