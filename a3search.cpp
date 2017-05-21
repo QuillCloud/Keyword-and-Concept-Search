@@ -15,35 +15,65 @@ int main(int argc, const char * argv[]) {
     if (argc < 4) {
         return 0;
     }
-    string terms[argc - 3];
+    int term_num;
+    float cnum;
     int j;
-    for (j = 0; j < argc - 3; j++) {
-        terms[j] = argv[j+3];
+    if (strncmp(argv[3], "-c", 2) == 0) {
+        term_num = argc - 5;
+        cnum = stof(argv[4]);
+    }
+    else {
+        term_num = argc - 3;
+    }
+    string terms[term_num];
+    for (j = 0; j < term_num; j++) {
+        terms[j] = argv[argc - 1 - j];
+        transform(terms[j].begin(), terms[j].end(), terms[j].begin(), ::tolower);
         Porter2Stemmer::stem(terms[j]);
     }
     DIR *indexfile;
     if(!(indexfile = opendir(argv[2]))) {
         build_index(argv[1], argv[2]);
     }
-    search_terms(argv[2], terms, argc - 3);
+    search_terms(argv[2], terms, term_num);
     return 0;
 }
+
+/* 
+    Build the index file
+    Read file by file in directory
+    1.Read a file and get each word in the file
+    2.Do Porter2Stemmer process with each word
+    3.Drop the word in stopword list
+    3.Store words in map, map the word to the number of this word in file
+    4.Build the posting list, write in a temporary index file
+    5.Read
+
+ */
 void build_index(const char * argument1, const char * argument2) {
     int kcloud = 2003256;
     char readfile[kcloud];
     char name[300];
+    //stop word list, already do Poster2Stemmer::stem process, reference: http://www.ranks.nl/stopwords
     const char* stopword[] =
-    {   "about", "above", "after", "again", "against", "all", "and", "ani", "are", "becaus", "been", "befor", "below", "between", "both", "but", "can", "cannot", "could", "did", "doe", "down", "each", "few",
-        "for", "from", "had", "has", "have", "him", "his", "how","her", "into", "most", "more", "not", "onli", "veri",
-        "too", "they", "the", "such", "should", "some", "such", "than", "that", "were", "their", "then", "there",
-        "those", "what", "which", "while", "whi", "where", "when", "who", "whom", "you", "would", "your", "with",
-        "these", "she", "other", "our", "it", "go", "be", "do", "ad", "a", "in", "up", "aw"};
+    {   "a", "about", "abov", "after", "again", "against", "all","and", "ani", "are","aren",
+        "be", "becaus", "been", "befor", "below", "between", "both", "but", "by", "can",
+        "cannot", "could", "couldn", "did", "didn", "do", "doe", "doesn", "don", "down", "dure", "each",
+        "few", "for", "from", "further", "had", "hadn", "has", "hasn", "have", "haven", "he", "her",
+        "here", "herself", "him", "himself", "his", "how", "i", "if", "into", "is", "isn", "it",
+        "itself", "me", "more", "most", "mustn", "my", "myself" ,"nor", "not", "off", "onc", "onli", "other",
+        "ought", "our", "ourselv", "out", "over", "own", "same", "shan", "she", "should", "shouldn", "some",
+        "such", "than", "that", "the", "their", "them", "themselv", "then", "there", "these", "they",
+        "this", "those", "through", "too", "under", "until", "up", "veri", "was", "wasn","we", "were",
+        "weren", "what", "when", "where", "which", "while", "who", "whom", "whi", "with", "won", "would", "wouldn"
+        "you", "your", "yourself", "yourselv"};
     char * word;
     DIR *pDIR;
     FILE *file_in, *index_read, *index_write, *total_word, *write_filename;
     string file_name[2000];
     struct dirent *entry;
     int i, last_number;
+    string temp;
     unsigned long location, seek_location;
     static const char* const index[] = {"index1", "index2"};
     map<string, int> word_list;
@@ -312,6 +342,9 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
     }
     if (word_count < number_of_term) {
         cout<<endl;
+        fclose(read_word);
+        fclose(read_files);
+        fclose(read_index);
         return;
     }
     int result_pl[2000];
@@ -378,6 +411,13 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
         memcpy(&current_pl, &result_pl, result_len*sizeof(int));
         memcpy(&current_fre, &result_fre, result_len*sizeof(int));
         len1 = result_len;
+    }
+    if (result_len == 0) {
+        cout<<endl;
+        fclose(read_word);
+        fclose(read_files);
+        fclose(read_index);
+        return;
     }
     int result_sequence[result_len];
     int largest;
