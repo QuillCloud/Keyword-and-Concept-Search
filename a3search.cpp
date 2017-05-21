@@ -158,6 +158,7 @@ void build_index(const char * argument1, const char * argument2) {
                 for (i = 0; i < file_number; i++) {
                     fprintf(write_filename, "%s\n", file_name[i].c_str());
                 }
+                fclose(write_filename);
                 /*
                     if it is also the first file(means only one file)
                  */
