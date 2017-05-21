@@ -47,8 +47,12 @@ int main(int argc, const char * argv[]) {
     3.Drop the word in stopword list
     3.Store words in map, map the word to the number of this word in file
     4.Build the posting list, write in a temporary index file
-    5.Read
-
+    5.there 2 temporary index files, for each file, it will read one which written by previous file 
+    the write a updated file. Which means the posting list in index file will update.
+    6.when reach the last file in directory, create index directory(xx.idx), and create 3 files "files", "index", "word"
+    "files": contain every files' name, separate by "\n";
+    "index": contain posting list, each line is a word. also include word frequence in each file. like fi1-2 3-4
+    "word" : contain words,
  */
 void build_index(const char * argument1, const char * argument2) {
     int kcloud = 2003256;
@@ -158,7 +162,7 @@ void build_index(const char * argument1, const char * argument2) {
                 for (i = 0; i < file_number; i++) {
                     fprintf(write_filename, "%s\n", file_name[i].c_str());
                 }
-                fclose(write_filename);
+                
                 /*
                     if it is also the first file(means only one file)
                  */
@@ -180,6 +184,7 @@ void build_index(const char * argument1, const char * argument2) {
                     }
                     fclose(index_write);
                     fclose(total_word);
+                    fclose(write_filename);
                 }
                 /*
                     at least two files
@@ -458,6 +463,7 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
     fclose(read_word);
     fclose(read_files);
     fclose(read_index);
+    return;
 }
 
 int get_length(int x)
