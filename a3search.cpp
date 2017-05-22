@@ -210,6 +210,9 @@ void build_index(const char * argument1, const char * argument2) {
                 continue;
             }
             entry = readdir(pDIR);
+            if(strcmp(entry->d_name, ".") == 0 && strcmp(entry->d_name, "..") == 0 && strcmp(entry->d_name, ".DS_Store") == 0) {
+                entry = readdir(pDIR);
+            }
             /*
                 if it is the last file, start build index file, and the file inside("files" "word" "index")
              */
