@@ -212,6 +212,7 @@ void build_index(const char * argument1, const char * argument2) {
             entry = readdir(pDIR);
             while(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, ".DS_Store") == 0) {
                 entry = readdir(pDIR);
+                cout<<entry->d_name<<endl;
             }
             /*
                 if it is the last file, start build index file, and the file inside("files" "word" "index")
