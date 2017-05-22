@@ -41,23 +41,40 @@ int main(int argc, const char * argv[]) {
 
 /* 
     Build the index file
+ 
     Read file by file in directory
+ 
     1.Read a file and get each word in the file
-    2.Do Porter2Stemmer process with each word
-    3.Drop the word in stopword list
-    3.Store words in map, map the word to the number of this word in file
+ 
+    2.Do Porter2Stemmer process with each word and Drop the word in stopword list
+ 
+    3.Store words in map, map the word to the frequence of this word in file
+ 
     4.Build the posting list, write in a temporary index file
-    5.there 2 temporary index files, for each file, it will read one which written by previous file 
-    the write a updated file. Which means the posting list in index file will update.
-    6.when reach the last file in directory, create index directory(xx.idx), and create 3 files "files", "index", "word"
+ 
+    There are 2 temporary index files, for each file, it will read one which written by previous file,
+    then write a updated file. Which means the posting list in index file will update each time.
+ 
+    In temporary index, a single line form is "word file_number-frequence". For example:
+    'app 2-2 3-4 5-1', means word 'app' occur in 2nd(2 times), 5th(4 times), 7th(1 time) files
+    notice that, except first number, the file number need to be calculated.
+    example: for 3-4, the file is 5th file, first number + current number (2+3=5)
+ 
+    5.when reach the last file in directory, create index directory(xx.idx), and create 3 files "files", "index", "word"
+ 
     "files": contain every files' name, separate by "\n";
-    "index": contain posting list, each line is a word. also include word frequence in each file. like fi1-2 3-4
-    "word" : contain words,
+ 
+    "index": contain posting list, each line is a word. also include word frequence in each file. 
+            similar with temporary index file, but no word at front like '2-2 3-4 5-1'
+ 
+    "word" : contain words, form is location-word, the location is the corresponding posting list location in "index"
+            like "4-app" means the word "app" posting list start location is 4th character in "index", words separated by
+            space.
+ 
+    6.rmove the temporary index files.
  */
 void build_index(const char * argument1, const char * argument2) {
-    int kcloud = 2003256;
-    char readfile[kcloud];
-    char name[300];
+    
     //stop word list, already do Poster2Stemmer::stem process, reference: http://www.ranks.nl/stopwords
     const char* stopword[] =
     {   "a", "about", "abov", "after", "again", "against", "all","and", "ani", "are","aren",
@@ -71,20 +88,58 @@ void build_index(const char * argument1, const char * argument2) {
         "this", "those", "through", "too", "under", "until", "up", "veri", "was", "wasn","we", "were",
         "weren", "what", "when", "where", "which", "while", "who", "whom", "whi", "with", "won", "would", "wouldn"
         "you", "your", "yourself", "yourselv"};
-    char * word;
+    //Open directory
     DIR *pDIR;
-    FILE *file_in, *index_read, *index_write, *total_word, *write_filename;
-    string file_name[2000];
     struct dirent *entry;
+    /* 
+        file_in : read original file
+        index_read : read temporary index
+        index_write : wirte index (including temporary index and final index)
+        total_word : wirte "word" in index directory
+        write_filename : write "files" in index dirctory
+     */
+    FILE *file_in, *index_read, *index_write, *total_word, *write_filename;
+    
+    //get word in orignal file
+    char * word;
+    
+    //for readline
+    int k = 2003256;
+    char readfile[k];
+    
+    //store the path of file since files is in directory
+    char name[300];
+    
+    //store file name
+    string file_name[2000];
+
+    // i use in for loop
+    // last_number for write the last file number in posting list
     int i, last_number;
-    string temp;
+    
+    // location for geting substring
+    // seek_location, store the start position of each word's posting list
     unsigned long location, seek_location;
-    static const char* const index[] = {"index1", "index2"};
+    
+    //temporary index name
+    static const char* const index[] = {"temporary_index1", "temporary_index2"};
+    
+    // maping word and its frequence
     map<string, int> word_list;
+    
+    // map iterator for go through map
     typedef map<string, int>::const_iterator MapIterator;
+    
+    //count the number of file
     int file_number = 0;
-    string index_word, posting_list, previous_word;
+    
+    // index_word store the word after stem and stopword process
+    // posting_list sotre the posting list
+    string index_word, posting_list;
+    
+    // use non-alphabet characters as delimiter
     char delim[] = "-; ,<>1234567890#*?.[]\\/$%^&()!@+=_~`{}|\"";
+    
     /*
         read files in folder
      */
@@ -95,17 +150,23 @@ void build_index(const char * argument1, const char * argument2) {
         }
         while(1){
             /*
-                read each file except . and ..
+                read each file except ‘.’ , ‘..’ and '.DS_Store'
              */
             if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, ".DS_Store") != 0) {
+                //open the file
                 strcpy(name, argument1);
                 strcat(name, "/");
                 strcat(name, entry->d_name);
                 file_in = fopen(name, "r");
                 file_name[file_number] = entry->d_name;
                 file_number++;
-                while(fgets(readfile, kcloud, file_in) != NULL) {
+                
+                //read each line and separate each word in line
+                while(fgets(readfile, k, file_in) != NULL) {
                     word = strtok(readfile, delim);
+                    
+                    // change word to lower case, do Porter2Stemmer::stem process, and drop stopwords
+                    // then store in map, count the frequence
                     while(word != NULL) {
                         if (strlen(word) < 3) {
                             word = strtok(NULL, delim);
@@ -136,7 +197,6 @@ void build_index(const char * argument1, const char * argument2) {
                             word_list[index_word]++;
                         }
                         word = strtok(NULL, delim);
-                        
                     }
                 }
                 fclose(file_in);
@@ -150,9 +210,10 @@ void build_index(const char * argument1, const char * argument2) {
             }
             entry = readdir(pDIR);
             /*
-                if it is the last file
+                if it is the last file, start build index file, and the file inside("files" "word" "index")
              */
             if (entry == NULL) {
+                //write file names in "files"
                 strcpy(name, "mkdir ");
                 strcat(name, argument2);
                 system(name);
@@ -162,7 +223,6 @@ void build_index(const char * argument1, const char * argument2) {
                 for (i = 0; i < file_number; i++) {
                     fprintf(write_filename, "%s\n", file_name[i].c_str());
                 }
-                
                 /*
                     if it is also the first file(means only one file)
                  */
@@ -187,7 +247,10 @@ void build_index(const char * argument1, const char * argument2) {
                     fclose(write_filename);
                 }
                 /*
-                    at least two files
+                    if the total number of file greater than 1
+                    read the temporary index written by previous file
+                    update the posting list in each line and write them to final index file "index"
+                    also write "files" and "word"
                  */
                 else {
                     index_read = fopen(index[(file_number-1)%2], "r");
@@ -197,7 +260,7 @@ void build_index(const char * argument1, const char * argument2) {
                     strcpy(name, argument2);
                     strcat(name, "/word");
                     total_word = fopen(name, "w");
-                    fgets(readfile, kcloud, index_read);
+                    fgets(readfile, k, index_read);
                     index_word = readfile;
                     index_word = index_word.substr(0, index_word.find(" "));
                     seek_location = 0;
@@ -225,7 +288,7 @@ void build_index(const char * argument1, const char * argument2) {
                                 fprintf(index_write, "%s %d-%d\n", posting_list.c_str(), last_number, iter->second);
                                 seek_location += strlen(posting_list.c_str()) + get_length(last_number) + get_length(iter->second) + 3;
                             }
-                            fgets(readfile, kcloud, index_read);
+                            fgets(readfile, k, index_read);
                             index_word = readfile;
                             index_word = index_word.substr(0, index_word.find(" "));
                         }
@@ -246,8 +309,7 @@ void build_index(const char * argument1, const char * argument2) {
             /*
                 if it is not the last file
              */
-            
-            // if it is the first file
+            // if it is the first file no need to update posting list, just write it into temporary index file with map
             else if (file_number == 1) {
                 index_write = fopen(index[file_number%2], "w");
                 for (MapIterator iter = word_list.begin(); iter != word_list.end(); iter++) {
@@ -258,11 +320,15 @@ void build_index(const char * argument1, const char * argument2) {
                 }
                 fclose(index_write);
             }
-            // if it is not the first file
+            /*
+                if it is not the first file, need to read each line of last temporary index, update it by map,
+                if new word in map, wirte a new line as posting list and write it into new temporary index file,
+                if the word already in index file, update the posting list and write it into new temporary index file
+             */
             else {
                 index_read = fopen(index[(file_number-1)%2], "r");
                 index_write = fopen(index[file_number%2], "w");
-                fgets(readfile, kcloud, index_read);
+                fgets(readfile, k, index_read);
                 index_word = readfile;
                 index_word = index_word.substr(0, index_word.find(" "));
                 for (MapIterator iter = word_list.begin(); iter != word_list.end(); iter++) {
@@ -280,7 +346,7 @@ void build_index(const char * argument1, const char * argument2) {
                             last_number = file_number - last_number;
                             fprintf(index_write, "%s %d-%d\n", readfile, last_number,iter->second);
                         }
-                        fgets(readfile, kcloud, index_read);
+                        fgets(readfile, k, index_read);
                         index_word = readfile;
                         index_word = index_word.substr(0, index_word.find(" "));
                     }
@@ -299,18 +365,61 @@ void build_index(const char * argument1, const char * argument2) {
     }
 }
 
+/*
+    Search the terms with index directory.
+ 
+    1.find words in file "word"
+    
+    2.get the seek location of word
+ 
+    3.get posting list of word in file "index" by seek location
+ 
+    4.do conjunctive query for every terms (start with shortest posting list)
+ 
+    5.get result file number, they should be sorted by frequence
+ 
+    6.with the results, get file name from file "word", then output them
+ 
+    7.if no results, output newline
+ 
+ */
 void search_terms(const char * argument2, string search_terms[], int number_of_term) {
+    
+    //for read line
     int k = 2003256;
     char read[k];
+    
+    //read 3 files in index directory("word" "index" "files")
     FILE *read_word, *read_index, *read_files;
+    
+    //store path of file
     char name[300];
+    
+    //get word
     char word[256];
+    
+    //posting list, value is file number
     int posting_list[5][2000] = {0};
+    
+    //corresponding to posting_list, value is frequence
     int occur_times[5][2000] = {0};
+    
+    //store length of posting list
     int len_of_pl[5] = {0};
+    
+    // seek_location : get posting list start location in "index"
+    // i, j use in for loop
+    // word_count file_count count the words and files
     int seek_location, i, j, word_count, file_count;
+    
+    // every single part in posting list, like file_number-frequence
     char * single_of_pl;
-    string get_word, index_word;
+    
+    // get_word get the word in "word"
+    // index_file get file number
+    string get_word, index_file;
+    
+    //open 3 files in index directory
     strcpy(name, argument2);
     strcat(name, "/word");
     read_word = fopen(name, "r");
@@ -321,6 +430,8 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
     strcat(name, "/files");
     read_files = fopen(name, "r");
     word_count = 0;
+    
+    //get every search terms' posting list, store file number in posting_list, store frequence in occur_times
     while(fscanf(read_word, "%s", word) != EOF) {
         get_word = word;
         seek_location = atoi(get_word.substr(0, get_word.find("-")).c_str());
@@ -332,9 +443,9 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
                 single_of_pl = strtok(read, " ");
                 file_count = 0;
                 while (single_of_pl != NULL) {
-                    index_word = single_of_pl;
-                    posting_list[word_count][file_count] = atoi(index_word.substr(0, index_word.find("-")).c_str());
-                    occur_times[word_count][file_count] = atoi(index_word.substr(index_word.find("-") + 1, strlen(index_word.c_str()) - index_word.find("-")).c_str());
+                    index_file = single_of_pl;
+                    posting_list[word_count][file_count] = atoi(index_file.substr(0, index_file.find("-")).c_str());
+                    occur_times[word_count][file_count] = atoi(index_file.substr(index_file.find("-") + 1, strlen(index_file.c_str()) - index_file.find("-")).c_str());
                     if (file_count != 0) {
                         posting_list[word_count][file_count] += posting_list[word_count][0];
                     }
@@ -346,6 +457,9 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
             }
         }
     }
+    
+    //if number of posting list is smaller than number of search terms, means some word have no match
+    //output newline,stop function.
     if (word_count < number_of_term) {
         cout<<endl;
         fclose(read_word);
@@ -353,10 +467,15 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
         fclose(read_index);
         return;
     }
+    
+    //prepare for conjunctive query, result_pl and result_fre store the conjunctive result
+    //current_pl and current_fre sotre current posting list for conjunctive query
     int result_pl[2000];
     int result_fre[2000];
     int current_pl[2000];
     int current_fre[2000];
+    
+    //this part is for sort the posting list by their length, store result in array "compare"
     int compare[word_count];
     for (i = 0; i < word_count; i++) {
         compare[i] = -1;
@@ -386,6 +505,8 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
             }
         }
     }
+    
+    //conjunctive query, start from shortest postings list to longest postings list
     int m, n;
     int len1, len2;
     int result_len;
@@ -398,7 +519,6 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
         m = 0;
         n = 0;
         result_len = 0;
-        
         while (m < len2 and n < len1) {
             if (posting_list[compare[i]][m] == current_pl[n]){
                 result_pl[result_len] = posting_list[compare[i]][m];
@@ -418,6 +538,8 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
         memcpy(&current_fre, &result_fre, result_len*sizeof(int));
         len1 = result_len;
     }
+    
+    //if no results, output newline and stop function
     if (result_len == 0) {
         cout<<endl;
         fclose(read_word);
@@ -425,6 +547,8 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
         fclose(read_index);
         return;
     }
+    
+    //sort the file number by frequence
     int result_sequence[result_len];
     int largest;
     for (i = 0; i < result_len; i++) {
@@ -445,8 +569,9 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
             }
         }
     }
-    string f_name[result_len];
     
+    //get file names from "files"
+    string f_name[result_len];
     int c = 0;
     i = 0;
     while (i < result_len) {
@@ -457,6 +582,8 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
             i++;
         }
     }
+    
+    //output the result file name in order
     for (i = 0; i < result_len; i++) {
         cout<<f_name[result_sequence[i]]<<endl;
     }
@@ -466,6 +593,7 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
     return;
 }
 
+//function for get length of number(number of digits)
 int get_length(int x)
 {
     int leng=0;
