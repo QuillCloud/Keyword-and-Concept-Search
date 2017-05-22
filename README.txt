@@ -138,10 +138,4 @@ About external library function Porter2Stemmer::stem, in most time it works fine
 then ‘apples’ could be treated as ‘apple’, but sometimes, if a word ‘appl’ in file, it will also be treated like ‘apple’. 
 But in most case it is fine and I need this function to save space and time as well as the search accuracy(when search apple, apples should be matched).
 
-
-
-
-
-
-
-
+Concept search not be included in this program, but still accept -c option.
