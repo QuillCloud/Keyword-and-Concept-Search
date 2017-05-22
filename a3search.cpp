@@ -152,7 +152,6 @@ void build_index(const char * argument1, const char * argument2) {
             /*
                 read each file except ‘.’ , ‘..’ and '.DS_Store'
              */
-            cout<<entry->d_name<<endl;
             if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, ".DS_Store") != 0) {
                 //open the file
                 
