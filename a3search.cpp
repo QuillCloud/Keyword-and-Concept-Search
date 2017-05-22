@@ -219,7 +219,6 @@ void build_index(const char * argument1, const char * argument2) {
                 if it is the last file, start build index file, and the file inside("files" "word" "index")
              */
             if (entry == NULL) {
-                cout<<"last file"<<endl;
                 //write file names in "files"
                 strcpy(name, "mkdir ");
                 strcat(name, argument2);
