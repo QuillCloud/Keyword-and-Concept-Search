@@ -154,6 +154,7 @@ void build_index(const char * argument1, const char * argument2) {
              */
             if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, ".DS_Store") != 0) {
                 //open the file
+                cout<<entry->d_name<<endl;
                 strcpy(name, argument1);
                 strcat(name, "/");
                 strcat(name, entry->d_name);
