@@ -161,7 +161,6 @@ void build_index(const char * argument1, const char * argument2) {
                 file_in = fopen(name, "r");
                 file_name[file_number] = entry->d_name;
                 file_number++;
-                
                 //read each line and separate each word in line
                 while(fgets(readfile, k, file_in) != NULL) {
                     word = strtok(readfile, delim);
@@ -214,6 +213,7 @@ void build_index(const char * argument1, const char * argument2) {
                 if it is the last file, start build index file, and the file inside("files" "word" "index")
              */
             if (entry == NULL) {
+                cout<<"last file"<<endl;
                 //write file names in "files"
                 strcpy(name, "mkdir ");
                 strcat(name, argument2);
