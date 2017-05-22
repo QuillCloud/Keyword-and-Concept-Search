@@ -548,7 +548,20 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
         return;
     }
     
-    //sort the file number by frequence
+    //get file names from "files"
+    string f_name[result_len];
+    int c = 0;
+    i = 0;
+    while (i < result_len) {
+        fscanf(read_files, "%s", name);
+        c++;
+        if (c == current_pl[i]) {
+            f_name[i] = name;
+            i++;
+        }
+    }
+    
+    //sort the file number by frequence, if same, sort in ascending order (lexicographically).
     int result_sequence[result_len];
     int largest;
     for (i = 0; i < result_len; i++) {
@@ -567,21 +580,16 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
                 largest = current_fre[j];
                 result_sequence[i] = j;
             }
+            else if (current_fre[j] == largest) {
+                if((strcmp(f_name[j].c_str(), f_name[result_sequence[i]].c_str())) < 0) {
+                    largest = current_fre[j];
+                    result_sequence[i] = j;
+                }
+            }
         }
     }
+
     
-    //get file names from "files"
-    string f_name[result_len];
-    int c = 0;
-    i = 0;
-    while (i < result_len) {
-        fscanf(read_files, "%s", name);
-        c++;
-        if (c == current_pl[i]) {
-            f_name[i] = name;
-            i++;
-        }
-    }
     
     //output the result file name in order
     for (i = 0; i < result_len; i++) {
