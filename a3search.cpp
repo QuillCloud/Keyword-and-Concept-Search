@@ -209,7 +209,7 @@ void build_index(const char * argument1, const char * argument2) {
                 continue;
             }
             entry = readdir(pDIR);
-            while(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, ".DS_Store") == 0) {
+            while(strcmp(entry->d_name, ".") == 0 or strcmp(entry->d_name, "..") == 0 or strcmp(entry->d_name, ".DS_Store") == 0) {
                 entry = readdir(pDIR);
                 cout<<entry->d_name<<endl;
             }
