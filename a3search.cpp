@@ -18,6 +18,7 @@ int main(int argc, const char * argv[]) {
     int term_num;
     float cnum;
     int j;
+    //if it is concpet search
     if (strncmp(argv[3], "-c", 2) == 0) {
         term_num = argc - 5;
         cnum = stof(argv[4]);
@@ -25,12 +26,14 @@ int main(int argc, const char * argv[]) {
     else {
         term_num = argc - 3;
     }
+    //each terms to be lowercase and do Porter2Stemmer:stem process
     string terms[term_num];
     for (j = 0; j < term_num; j++) {
         terms[j] = argv[argc - 1 - j];
         transform(terms[j].begin(), terms[j].end(), terms[j].begin(), ::tolower);
         Porter2Stemmer::stem(terms[j]);
     }
+    //if index file already exists
     DIR *indexfile;
     if(!(indexfile = opendir(argv[2]))) {
         build_index(argv[1], argv[2]);
