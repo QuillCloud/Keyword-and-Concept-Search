@@ -11,4 +11,4 @@ porter2_stemmer.o: porter2_stemmer.cpp porter2_stemmer.h
 a3search.o: a3search.cpp a3search.h
 	$(C) $(CFLAGS) -c a3search.cpp
 clean:
-	rm *.o a3search
+	rm *.o a3search syn_list.txt
