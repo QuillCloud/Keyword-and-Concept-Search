@@ -16,8 +16,9 @@ int main(int argc, const char * argv[]) {
         return 0;
     }
     int term_num;
-    float cnum;
+    float cnum = 0;
     int j;
+    
     //if it is concpet search
     if (strncmp(argv[3], "-c", 2) == 0) {
         term_num = argc - 5;
@@ -38,7 +39,12 @@ int main(int argc, const char * argv[]) {
     if(!(indexfile = opendir(argv[2]))) {
         build_index(argv[1], argv[2]);
     }
-    search_terms(argv[2], terms, term_num);
+    if (cnum == 0) {
+        n_search_terms(argv[2], terms, term_num);
+    }
+    else {
+        c_search_terms(argv[2], terms, term_num, cnum);
+    }
     return 0;
 }
 
@@ -392,7 +398,7 @@ void build_index(const char * argument1, const char * argument2) {
     7.if no results, output newline
  
  */
-void search_terms(const char * argument2, string search_terms[], int number_of_term) {
+void n_search_terms(const char * argument2, string search_terms[], int number_of_term) {
     
     //for read line
     int k = 2003256;
@@ -453,15 +459,15 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
                 file_count = 0;
                 while (single_of_pl != NULL) {
                     index_file = single_of_pl;
-                    posting_list[word_count][file_count] = atoi(index_file.substr(0, index_file.find("-")).c_str());
-                    occur_times[word_count][file_count] = atoi(index_file.substr(index_file.find("-") + 1, strlen(index_file.c_str()) - index_file.find("-")).c_str());
+                    posting_list[i][file_count] = atoi(index_file.substr(0, index_file.find("-")).c_str());
+                    occur_times[i][file_count] = atoi(index_file.substr(index_file.find("-") + 1, strlen(index_file.c_str()) - index_file.find("-")).c_str());
                     if (file_count != 0) {
-                        posting_list[word_count][file_count] += posting_list[word_count][0];
+                        posting_list[i][file_count] += posting_list[i][0];
                     }
                     single_of_pl = strtok(NULL, " ");
                     file_count++;
                 }
-                len_of_pl[word_count] = file_count;
+                len_of_pl[i] = file_count;
                 word_count++;
             }
         }
@@ -480,9 +486,9 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
     //prepare for conjunctive query, result_pl and result_fre store the conjunctive result
     //current_pl and current_fre sotre current posting list for conjunctive query
     int result_pl[2000];
-    int result_fre[2000];
+    float result_fre[2000];
     int current_pl[2000];
-    int current_fre[2000];
+    float current_fre[2000];
     
     //this part is for sort the posting list by their length, store result in array "compare"
     int compare[word_count];
@@ -569,7 +575,6 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
             i++;
         }
     }
-    
     //sort the file number by frequence, if same, sort in ascending order (lexicographically).
     int result_sequence[result_len];
     int largest;
@@ -597,9 +602,326 @@ void search_terms(const char * argument2, string search_terms[], int number_of_t
             }
         }
     }
+    //output the result file name in order
+    for (i = 0; i < result_len; i++) {
+        cout<<f_name[result_sequence[i]]<<endl;
+    }
+    fclose(read_word);
+    fclose(read_files);
+    fclose(read_index);
+    return;
+}
 
+void c_search_terms(const char * argument2, string search_terms[], int number_of_term, float cnum) {
+    FILE *Syn = fopen("syn_list.txt", "r");
+    int k = 2003256;
+    char read[k];
+    char word[256];
+    int i, j, l;
+    string syn1[400];
+    string syn2[400];
+    string syn_terms[number_of_term];
+    for (i = 0; i<number_of_term;i++) {
+        syn_terms[i] = "N";
+    }
+    //for read line
+  
     
+    //read 3 files in index directory("word" "index" "files")
+    FILE *read_word, *read_index, *read_files;
     
+    //store path of file
+    char name[300];
+    
+    //posting list, value is file number
+    int posting_list[5][2000] = {0};
+    
+    int syn_posting_list[5][2000] = {0};
+    
+    //corresponding to posting_list, value is frequence
+    float occur_times[5][2000] = {0};
+    
+    float syn_occur_times[5][2000] = {0};
+    
+    //store length of posting list
+    int len_of_pl[5] = {0};
+    int syn_len_of_pl[5] = {0};
+    
+    // seek_location : get posting list start location in "index"
+    // word_count file_count count the words and files
+    int seek_location, word_count, file_count;
+    
+    // every single part in posting list, like file_number-frequence
+    char * single_of_pl;
+    
+    // get_word get the word in "word"
+    // index_file get file number
+    string get_word, index_file;
+    i = 0;
+    while(fscanf(Syn, "%s", word) != EOF) {
+        syn1[i] = word;
+        Porter2Stemmer::stem(syn1[i]);
+        fscanf(Syn, "%s", word);
+        syn2[i] = word;
+        Porter2Stemmer::stem(syn2[i]);
+        i++;
+    }
+   
+    int syn_flag = 0;
+    for (j = 0; j<i; j++) {
+        for (l = 0; l < number_of_term; l++) {
+            if (search_terms[l] == syn2[j]) {
+                syn_terms[l] = syn1[j];
+                syn_flag  = 1;
+            }
+            if (search_terms[l] == syn1[j]) {
+                syn_terms[l] = syn2[j];
+                syn_flag  = 1;
+            }
+        }
+    }
+    if (syn_flag == 0) {
+        n_search_terms(argument2, search_terms, number_of_term);
+        return;
+    }
+    fclose(Syn);
+    //open 3 files in index directory
+    strcpy(name, argument2);
+    strcat(name, "/word");
+    read_word = fopen(name, "r");
+    strcpy(name, argument2);
+    strcat(name, "/index");
+    read_index = fopen(name, "r");
+    strcpy(name, argument2);
+    strcat(name, "/files");
+    read_files = fopen(name, "r");
+    word_count = 0;
+    
+    //get every search terms' posting list, store file number in posting_list, store frequence in occur_times
+    //also get the synonym word
+    while(fscanf(read_word, "%s", word) != EOF) {
+        get_word = word;
+        seek_location = atoi(get_word.substr(0, get_word.find("-")).c_str());
+        get_word = get_word.substr(get_word.find("-") + 1, strlen(word) - get_word.find("-")).c_str();
+        for (i = 0; i < number_of_term; i++) {
+            if (search_terms[i] == get_word.c_str()) {
+                fseek(read_index, seek_location, SEEK_SET);
+                fgets(read, k, read_index);
+                single_of_pl = strtok(read, " ");
+                file_count = 0;
+                while (single_of_pl != NULL) {
+                    index_file = single_of_pl;
+                    posting_list[i][file_count] = atoi(index_file.substr(0, index_file.find("-")).c_str());
+                    occur_times[i][file_count] = atoi(index_file.substr(index_file.find("-") + 1, strlen(index_file.c_str()) - index_file.find("-")).c_str());
+                    if (file_count != 0) {
+                        posting_list[i][file_count] += posting_list[i][0];
+                    }
+                    single_of_pl = strtok(NULL, " ");
+                    file_count++;
+                }
+                len_of_pl[i] = file_count;
+                word_count++;
+            }
+        }
+        for (i = 0; i < number_of_term;i++) {
+            if (syn_terms[i] == get_word.c_str()) {
+                fseek(read_index, seek_location, SEEK_SET);
+                fgets(read, k, read_index);
+                single_of_pl = strtok(read, " ");
+                file_count = 0;
+                while (single_of_pl != NULL) {
+                    index_file = single_of_pl;
+                    syn_posting_list[i][file_count] = atoi(index_file.substr(0, index_file.find("-")).c_str());
+                    syn_occur_times[i][file_count] = atoi(index_file.substr(index_file.find("-") + 1, strlen(index_file.c_str()) - index_file.find("-")).c_str());
+                    if (file_count != 0) {
+                        syn_posting_list[i][file_count] += syn_posting_list[i][0];
+                    }
+                    single_of_pl = strtok(NULL, " ");
+                    file_count++;
+                }
+                syn_len_of_pl[i] = file_count;
+            }
+        }
+        
+    }
+    
+    int temp_posting_list[2000];
+    float temp_occur_times[2000];
+    int m, n;
+    for (i = 0; i < number_of_term;i++) {
+        if (syn_terms[i] != "N") {
+            m = 0;
+            n = 0;
+            j = 0;
+            while (m < len_of_pl[i] or n < syn_len_of_pl[i]) {
+                if (n == syn_len_of_pl[i] and m < len_of_pl[i]) {
+                    temp_posting_list[j] = posting_list[i][m];
+                    temp_occur_times[j] = occur_times[i][m];
+                    m++;
+                }
+                else if (m == len_of_pl[i] and n < syn_len_of_pl[i]) {
+                    temp_posting_list[j] = syn_posting_list[i][n];
+                    temp_occur_times[j] = syn_occur_times[i][n]*cnum;
+                    n++;
+                }
+                else if (posting_list[i][m] == syn_posting_list[i][n]) {
+                    temp_posting_list[j] = posting_list[i][m];
+                    temp_occur_times[j] = occur_times[i][m] + syn_occur_times[i][n]*cnum;
+                    m++;
+                    n++;
+                }
+                else if(posting_list[i][m] < syn_posting_list[i][n]) {
+                    temp_posting_list[j] = posting_list[i][m];
+                    temp_occur_times[j] = occur_times[i][m];
+                    m++;
+                }
+                else if(posting_list[i][m] > syn_posting_list[i][n]) {
+                    temp_posting_list[j] = syn_posting_list[i][n];
+                    temp_occur_times[j] = syn_occur_times[i][n]*cnum;
+                    n++;
+                }
+                j++;
+                
+            }
+            len_of_pl[i] = j;
+            for (l = 0; l < len_of_pl[i]; l++) {
+                posting_list[i][l] = temp_posting_list[l];
+                occur_times[i][l] = temp_occur_times[l];
+                
+            }
+        }
+    }
+    
+    //if number of posting list is smaller than number of search terms, means some word have no match
+    //output newline,stop function.
+    if (word_count < number_of_term) {
+        cout<<endl;
+        fclose(read_word);
+        fclose(read_files);
+        fclose(read_index);
+        return;
+    }
+    
+    //prepare for conjunctive query, result_pl and result_fre store the conjunctive result
+    //current_pl and current_fre sotre current posting list for conjunctive query
+    int result_pl[2000];
+    float result_fre[2000];
+    int current_pl[2000];
+    float current_fre[2000];
+    
+    //this part is for sort the posting list by their length, store result in array "compare"
+    int compare[word_count];
+    for (i = 0; i < word_count; i++) {
+        compare[i] = -1;
+    }
+    int j2;
+    int smallest;
+    int flag;
+    for (i = 0; i < word_count; i++) {
+        smallest = -1;
+        for (j = 0; j < word_count; j++) {
+            flag = 0;
+            for (j2 = 0; j2 < i; j2++) {
+                if(compare[j2] == j) {
+                    flag = 1;
+                }
+            }
+            if (flag == 1) {
+                continue;
+            }
+            if (smallest == -1) {
+                smallest = len_of_pl[j];
+                compare[i] = j;
+            }
+            else if (smallest > len_of_pl[j]) {
+                smallest = len_of_pl[j];
+                compare[i] = j;
+            }
+        }
+    }
+    //conjunctive query, start from shortest postings list to longest postings list
+    int len1, len2;
+    int result_len;
+    len1 = len_of_pl[compare[0]];
+    memcpy(&current_pl, &posting_list[compare[0]], len_of_pl[compare[0]]*sizeof(int));
+    memcpy(&current_fre, &occur_times[compare[0]], len_of_pl[compare[0]]*sizeof(float));
+    result_len = len1;
+    for (i = 1; i < word_count; i++) {
+        len2 = len_of_pl[compare[i]];
+        m = 0;
+        n = 0;
+        result_len = 0;
+        while (m < len2 and n < len1) {
+            if (posting_list[compare[i]][m] == current_pl[n]){
+                result_pl[result_len] = posting_list[compare[i]][m];
+                result_fre[result_len] = occur_times[compare[i]][m] + current_fre[n];
+                result_len++;
+                m++;
+                n++;
+            }
+            else if (posting_list[compare[i]][m] < current_pl[n]) {
+                m++;
+            }
+            else if (posting_list[compare[i]][m] > current_pl[n]) {
+                n++;
+            }
+        }
+        memcpy(&current_pl, &result_pl, result_len*sizeof(int));
+        memcpy(&current_fre, &result_fre, result_len*sizeof(float));
+        len1 = result_len;
+    }
+    
+    //if no results, output newline and stop function
+    if (result_len == 0) {
+        cout<<endl;
+        fclose(read_word);
+        fclose(read_files);
+        fclose(read_index);
+        return;
+    }
+    
+    //get file names from "files"
+    string f_name[result_len];
+    int c = 0;
+    i = 0;
+    while (i < result_len) {
+        fscanf(read_files, "%s", name);
+        c++;
+        if (c == current_pl[i]) {
+            f_name[i] = name;
+            i++;
+        }
+    }
+    for (i = 0; i < result_len; i++) {
+        current_fre[i] = current_fre[i]/number_of_term;
+    }
+    //sort the file number by frequence, if same, sort in ascending order (lexicographically).
+    int result_sequence[result_len];
+    float largest;
+    for (i = 0; i < result_len; i++) {
+        largest = - 1;
+        for (j = 0; j < result_len; j++) {
+            flag = 1;
+            for (j2 = 0; j2 < i; j2++) {
+                if (result_sequence[j2] == j) {
+                    flag = 0;
+                }
+            }
+            if (flag == 0) {
+                continue;
+            }
+            if(current_fre[j] > largest) {
+                largest = current_fre[j];
+                result_sequence[i] = j;
+            }
+            else if (current_fre[j] == largest) {
+                if((strcmp(f_name[j].c_str(), f_name[result_sequence[i]].c_str())) < 0) {
+                    largest = current_fre[j];
+                    result_sequence[i] = j;
+                }
+            }
+        }
+    }
     //output the result file name in order
     for (i = 0; i < result_len; i++) {
         cout<<f_name[result_sequence[i]]<<endl;

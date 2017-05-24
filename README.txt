@@ -1,6 +1,6 @@
 External Library File: porter2_stemmer.cpp porter2_stemmer.h
 
-Program have two parts: Build index and Search with terms
+Program have three parts: Build index, Key word search and Concept search
 
 1. Build index:
 
@@ -97,7 +97,7 @@ File 2 create index directory and 3 files inside
 	2-1
 
 
-2. Search with terms:
+2. Key word search:
 
 (1) Get each term from arguments, transform them to lower case. Use Porter2Stemmer::stem(external library function) to get the terms’ stem.
 
@@ -132,10 +132,51 @@ File 2 create index directory and 3 files inside
 (8) output the file name in order, if no result, output a new line.
 
 
+3. Concept Search
+
+Similar as Key word search, but have an extra operation
+
+1. Get c number ‘cnum’
+
+2. There is a file call ‘syn_list.txt’ contain several pair words, each pair have two similar word. Do stem process for every words and save each word in pair into different array “syn1” and “syn2” at the same location.
+
+For example, 
+	syn1[0] = sea
+	syn2[0] = ocean
+
+3. From original search terms, find similar word by ‘syn1’ and ‘syn2’
+
+4. Get posting list by reading “word” and “index”(same as key word search)
+
+5. For the search term and its similar word, merge their posting list array.
+
+For example, Suppose original word is ‘sea’, cnum is 0.5
+
+Original posting list array:
+	[1, 4, 5] (sea)
+	[1, 2] 	  (ocean)
+
+Then new posting list array:
+	[1,2,4,5] (sea)
+
+and frequency is calculate by ‘f_term + f_similar * cnum’
+
+Original frequency array:
+	[2, 1, 1] (sea)
+	[3, 1]	  (ocean)
+
+The new frequency array:
+	[3.5, 0.5, 1, 1] (sea)
+
+6. Then rest part is same as Key word search, do conjunctive query for each terms form shortest to longest, sort result and output the result.
+
 
 Addition:
 About external library function Porter2Stemmer::stem, in most time it works fine, like ‘apples’ and ‘apple’, they are transform to ‘appl’,
 then ‘apples’ could be treated as ‘apple’, but sometimes, if a word ‘appl’ in file, it will also be treated like ‘apple’. 
 But in most case it is fine and I need this function to save space and time as well as the search accuracy(when search apple, apples should be matched).
 
-Concept search not be included in this program, but still accept -c option.
+
+Synonyms word list come from http://www.englisch-hilfen.de/en/words/synonyms.htm
+
+
