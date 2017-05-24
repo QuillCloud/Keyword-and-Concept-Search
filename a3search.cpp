@@ -188,8 +188,8 @@ void build_index(const char * argument1, const char * argument2) {
                                 index_word[i] = tolower(index_word[i]);
                             }
                             else if (index_word[i] < 'a' or index_word[i] > 'z') {
+                                cout<<index_word<<" "<<index_word[i]<<endl;
                                 index_word.erase(i, 1);
-                                cout<<"abc"<<endl;
                             }
                         }
                         if (strlen(index_word.c_str()) < 3) {
