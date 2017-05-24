@@ -9,8 +9,9 @@ porter2_stemmer.o: porter2_stemmer.cpp porter2_stemmer.h
 
 a3search.o: a3search.cpp a3search.h
 	$(C) $(CFLAGS) -c a3search.cpp
-	
 
+all:
+	tar -xvf syn.tar
 
 
 clean:
