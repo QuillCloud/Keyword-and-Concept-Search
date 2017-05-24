@@ -189,7 +189,7 @@ void build_index(const char * argument1, const char * argument2) {
                                 index_word[i] = tolower(index_word[i]);
                             }
                             else if (index_word[i] < 'a' or index_word[i] > 'z') {
-                                if (index_word[i] == NULL) {
+                                if (index_word[i] == '\0') {
                                     break;
                                 }
                                 cout<<index_word<<"------"<<index_word[i]<<"-----"<<endl;
