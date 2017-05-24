@@ -12,8 +12,7 @@ Program have three parts: Build index, Key word search and Concept search
 
 (4) Transform word to lower case. Use Porter2Stemmer::stem(external library function) to get the words’ stem.
 
-(5) There is a stopword list, contain 121 stop words(already do Porter2Stemmer::stem process), if the words in this list, drop these words.
-    reference: http://www.ranks.nl/stopwords (Default English stopwords list)
+(5) There is a stopword list, contain 100 stop words(already do Porter2Stemmer::stem process), if the words in this list, drop these words.
 
 (6) Use a map to store the information of current file, map the words to frequency of words in current file.
     The words in other files which already read but not in current file are also stored in this map, but the frequence is 0.
@@ -176,7 +175,8 @@ About external library function Porter2Stemmer::stem, in most time it works fine
 then ‘apples’ could be treated as ‘apple’, but sometimes, if a word ‘appl’ in file, it will also be treated like ‘apple’. 
 But in most case it is fine and I need this function to save space and time as well as the search accuracy(when search apple, apples should be matched).
 
-
-Synonyms word list come from http://www.englisch-hilfen.de/en/words/synonyms.htm
+reference: 
+Default English stopwords list: http://www.ranks.nl/stopwords
+Synonyms word list: http://www.englisch-hilfen.de/en/words/synonyms.htm
 
 

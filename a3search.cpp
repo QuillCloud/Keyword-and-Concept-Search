@@ -85,20 +85,20 @@ int main(int argc, const char * argv[]) {
 void build_index(const char * argument1, const char * argument2) {
     
     //stop word list, already do Poster2Stemmer::stem process, reference: http://www.ranks.nl/stopwords
+    map<string, int> stopword_m;
     const char* stopword[] =
-    {   "a", "about", "abov", "after", "again", "against", "all","and", "ani", "are","aren",
-        "be", "becaus", "been", "befor", "below", "between", "both", "but", "by", "can",
-        "cannot", "could", "couldn", "did", "didn", "do", "doe", "doesn", "don", "down", "dure", "each",
-        "few", "for", "from", "further", "had", "hadn", "has", "hasn", "have", "haven", "he", "her",
-        "here", "herself", "him", "himself", "his", "how", "i", "if", "into", "is", "isn", "it",
-        "itself", "me", "more", "most", "mustn", "my", "myself" ,"nor", "not", "off", "onc", "onli", "other",
-        "ought", "our", "ourselv", "out", "over", "own", "same", "shan", "she", "should", "shouldn", "some",
+    {   "about", "abov", "after", "again", "against", "all","and", "ani", "are",
+        "be", "becaus", "been", "befor", "below", "between", "both", "but", "can",
+        "cannot", "could", "did", "didn", "do", "doe", "doesn", "down", "dure", "each",
+        "few", "for", "from", "further", "had", "has", "have", "he", "her",
+        "here", "herself", "him", "himself", "his", "how", "into", "it",
+        "itself", "more", "most", "myself" ,"nor", "not", "off", "onc", "onli", "other",
+        "ought", "our", "ourselv", "out", "over", "own", "same", "she", "should", "shouldn", "some",
         "such", "than", "that", "the", "their", "them", "themselv", "then", "there", "these", "they",
-        "this", "those", "through", "too", "under", "until", "up", "veri", "was", "wasn","we", "were",
-        "weren", "what", "when", "where", "which", "while", "who", "whom", "whi", "with", "won", "would", "wouldn"
-        "you", "your", "yourself", "yourselv"};
+        "this", "those", "through", "too", "under", "until", "veri", "was", "wasn", "were", "what", "when", "where", "which", "while", "who", "whom", "whi", "with", "would", "you", "your", "yourself"};
     //Open directory
     DIR *pDIR;
+    
     struct dirent *entry;
     /* 
         file_in : read original file
@@ -148,10 +148,12 @@ void build_index(const char * argument1, const char * argument2) {
     
     // use non-alphabet characters as delimiter
     char delim[] = "-; ,<>1234567890#*?.[]\\/$%^&()!@+=_~`{}|\"";
-    
     /*
         read files in folder
      */
+    for (i = 0; i < 100; i++) {
+        stopword_m[stopword[i]] = 1;
+    }
     if((pDIR = opendir(argument1))) {
         entry = readdir(pDIR);
         if (entry == NULL) {
@@ -163,7 +165,6 @@ void build_index(const char * argument1, const char * argument2) {
              */
             if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, ".DS_Store") != 0) {
                 //open the file
-                
                 strcpy(name, argument1);
                 strcat(name, "/");
                 strcat(name, entry->d_name);
@@ -195,7 +196,7 @@ void build_index(const char * argument1, const char * argument2) {
                             continue;
                         }
                         Porter2Stemmer::stem(index_word);
-                        if ((find(begin(stopword), end(stopword), index_word) != end(stopword))) {
+                        if (stopword_m.find(index_word) != stopword_m.end()) {
                             word = strtok(NULL, delim);
                             continue;
                         }
