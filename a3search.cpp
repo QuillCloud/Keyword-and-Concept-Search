@@ -149,7 +149,7 @@ void build_index(const char * argument1, const char * argument2) {
     /*
         read files in folder
      */
-    for (i = 0; i < 100; i++) {
+    for (i = 0; i < 83; i++) {
         stopword_m[stopword[i]] = 1;
     }
     if((pDIR = opendir(argument1))) {
