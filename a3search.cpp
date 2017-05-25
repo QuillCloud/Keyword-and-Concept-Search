@@ -88,13 +88,7 @@ void build_index(const char * argument1, const char * argument2) {
     //stop word list, already do Poster2Stemmer::stem process, reference: http://www.ranks.nl/stopwords
     map<string, int> stopword_m;
     const char* stopword[] =
-    {   "about", "after", "again", "against", "all","and", "ani", "are",
-        "be", "becaus", "been", "befor", "between", "both", "but", "can",
-        "cannot", "could", "doe", "down", "each",
-        "few", "for", "from", "had", "has", "have", "he", "her",
-        "here", "him", "himself", "his", "how", "into", "it", "more", "most","nor", "not", "off", "onc", "onli", "other", "our", "out", "over", "own", "same", "she", "should", "some",
-        "such", "than", "that", "the", "their", "them", "then", "there", "these", "they",
-        "this", "those", "through", "too", "under", "until", "veri", "was", "were", "what", "when", "where", "which", "while", "who", "whom", "whi", "with", "would", "you", "your"};
+    {   "about", "after", "again", "against", "all","and", "ani", "are", "be", "becaus", "been", "befor", "between", "both", "but", "can","cannot", "could", "doe", "down", "each","few", "for", "from", "had", "has", "have", "he", "her","here", "him", "himself", "his", "how", "into", "it", "more", "most","nor", "not", "off", "onc", "onli", "other", "our", "out", "over", "own", "same", "she", "should", "some","such", "than", "that", "the", "their", "them", "then", "there", "these", "they","this", "those", "through", "too", "under", "until", "veri", "was", "were", "what", "when", "where", "which", "while", "who", "whom", "whi", "with", "would", "you", "your"};
     //Open directory
     DIR *pDIR;
     
@@ -145,7 +139,7 @@ void build_index(const char * argument1, const char * argument2) {
     string index_word, posting_list;
     
     // use non-alphabet characters as delimiter
-    char delim[] = " ~`1!2@3#4$5%6^7&8*9(0)_-+={[}]\\:;\"\'<,>.?/\n\t\v\r\b\f ‘’“”|";
+    char delim[] = " ~`1!2@3#4$5%6^7&8*9(0)_-+={[}]\\:;\"\'<,>.?/\n\t\v\r\b\f‘’“”|";
     /*
         read files in folder
      */
@@ -593,7 +587,7 @@ void n_search_terms(const char * argument2, string search_terms[], int number_of
     }
     //output the result file name in order
     for (i = 0; i < result_len; i++) {
-        cout<<f_name[result_sequence[i]]<<" "<<current_fre[result_sequence[i]]<<endl;
+        cout<<f_name[result_sequence[i]]<<endl;
     }
     fclose(read_word);
     fclose(read_files);
@@ -913,7 +907,7 @@ void c_search_terms(const char * argument2, string search_terms[], int number_of
     }
     //output the result file name in order
     for (i = 0; i < result_len; i++) {
-        cout<<f_name[result_sequence[i]]<<" "<<current_fre[result_sequence[i]]<<endl;
+        cout<<f_name[result_sequence[i]]<<endl;
     }
     fclose(read_word);
     fclose(read_files);
