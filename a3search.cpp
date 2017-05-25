@@ -183,7 +183,6 @@ void build_index(const char * argument1, const char * argument2) {
                         transform(index_word.begin(), index_word.end(), index_word.begin(), ::tolower);
                         Porter2Stemmer::stem(index_word);
                         if (stopword_m.find(index_word) != stopword_m.end()) {
-                            cout<<index_word<<endl;
                             word = strtok(NULL, delim);
                             continue;
                         }
