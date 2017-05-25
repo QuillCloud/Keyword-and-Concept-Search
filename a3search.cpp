@@ -147,7 +147,7 @@ void build_index(const char * argument1, const char * argument2) {
     string index_word, posting_list;
     
     // use non-alphabet characters as delimiter
-    char delim[] = "~`1!2@3#4$5%6^7&8*9(0)_-+={[}]|\\:;\"'<,>.?/ \n";
+    char delim[] = "~`1!2@3#4$5%6^7&8*9(0)_-+={[}]|\\:;\"'<,>.?/ \nÈ";
     
     /*
         read files in folder
