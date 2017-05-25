@@ -477,9 +477,9 @@ void n_search_terms(const char * argument2, string search_terms[], int number_of
     //prepare for conjunctive query, result_pl and result_fre store the conjunctive result
     //current_pl and current_fre sotre current posting list for conjunctive query
     int result_pl[2000];
-    float result_fre[2000];
+    int result_fre[2000];
     int current_pl[2000];
-    float current_fre[2000];
+    int current_fre[2000];
     
     //this part is for sort the posting list by their length, store result in array "compare"
     int compare[word_count];
