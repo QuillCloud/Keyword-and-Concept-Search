@@ -88,15 +88,13 @@ void build_index(const char * argument1, const char * argument2) {
     //stop word list, already do Poster2Stemmer::stem process, reference: http://www.ranks.nl/stopwords
     map<string, int> stopword_m;
     const char* stopword[] =
-    {   "about", "abov", "after", "again", "against", "all","and", "ani", "are",
-        "be", "becaus", "been", "befor", "below", "between", "both", "but", "can",
-        "cannot", "could", "did", "didn", "do", "doe", "doesn", "down", "dure", "each",
-        "few", "for", "from", "further", "had", "has", "have", "he", "her",
-        "here", "herself", "him", "himself", "his", "how", "into", "it",
-        "itself", "more", "most", "myself" ,"nor", "not", "off", "onc", "onli", "other",
-        "ought", "our", "ourselv", "out", "over", "own", "same", "she", "should", "shouldn", "some",
-        "such", "than", "that", "the", "their", "them", "themselv", "then", "there", "these", "they",
-        "this", "those", "through", "too", "under", "until", "veri", "was", "wasn", "were", "what", "when", "where", "which", "while", "who", "whom", "whi", "with", "would", "you", "your", "yourself"};
+    {   "about", "after", "again", "against", "all","and", "ani", "are",
+        "be", "becaus", "been", "befor", "between", "both", "but", "can",
+        "cannot", "could", "doe", "down", "each",
+        "few", "for", "from", "had", "has", "have", "he", "her",
+        "here", "him", "himself", "his", "how", "into", "it", "more", "most","nor", "not", "off", "onc", "onli", "other", "our", "out", "over", "own", "same", "she", "should", "some",
+        "such", "than", "that", "the", "their", "them", "then", "there", "these", "they",
+        "this", "those", "through", "too", "under", "until", "veri", "was", "were", "what", "when", "where", "which", "while", "who", "whom", "whi", "with", "would", "you", "your"};
     //Open directory
     DIR *pDIR;
     
@@ -185,6 +183,7 @@ void build_index(const char * argument1, const char * argument2) {
                         transform(index_word.begin(), index_word.end(), index_word.begin(), ::tolower);
                         Porter2Stemmer::stem(index_word);
                         if (stopword_m.find(index_word) != stopword_m.end()) {
+                            cout<<index_word<<endl;
                             word = strtok(NULL, delim);
                             continue;
                         }
@@ -595,7 +594,7 @@ void n_search_terms(const char * argument2, string search_terms[], int number_of
     }
     //output the result file name in order
     for (i = 0; i < result_len; i++) {
-        cout<<f_name[result_sequence[i]]<<endl;
+        cout<<f_name[result_sequence[i]]<<" "<<current_fre[result_sequence[i]]<<endl;
     }
     fclose(read_word);
     fclose(read_files);
@@ -915,7 +914,7 @@ void c_search_terms(const char * argument2, string search_terms[], int number_of
     }
     //output the result file name in order
     for (i = 0; i < result_len; i++) {
-        cout<<f_name[result_sequence[i]]<<endl;
+        cout<<f_name[result_sequence[i]]<<" "<<current_fre[result_sequence[i]]<<endl;
     }
     fclose(read_word);
     fclose(read_files);
