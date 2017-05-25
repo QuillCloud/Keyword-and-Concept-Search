@@ -147,7 +147,7 @@ void build_index(const char * argument1, const char * argument2) {
     string index_word, posting_list;
     
     // use non-alphabet characters as delimiter
-    char delim[] = "~`1!2@3#4$5%6^7&8*9(0)_-+={[}]|\\:;\"'<,>.?/";
+    char delim[] = "~`1!2@3#4$5%6^7&8*9(0)_-+={[}]|\\:;\"'<,>.?/ \n";
     
     /*
         read files in folder
@@ -184,18 +184,7 @@ void build_index(const char * argument1, const char * argument2) {
                             continue;
                         }
                         index_word = word;
-                        for (i = (int)strlen(index_word.c_str()); i >= 0; i--) {
-                            if (index_word[i] >= 'A' and index_word[i] <= 'Z') {
-                                index_word[i] = tolower(index_word[i]);
-                            }
-                            else if (index_word[i] < 'a' or index_word[i] > 'z') {
-                                if (index_word[i] == '\0') {
-                                    break;
-                                }
-                                cout<<index_word<<"------"<<index_word[i]<<"-----"<<endl;
-                                index_word.erase(i, 1);
-                            }
-                        }
+                        transform(index_word.begin(), index_word.end(), index_word.begin(), ::tolower);
                         if (strlen(index_word.c_str()) < 3) {
                             word = strtok(NULL, delim);
                             continue;
