@@ -39,6 +39,7 @@ int main(int argc, const char * argv[]) {
     if(!(indexfile = opendir(argv[2]))) {
         build_index(argv[1], argv[2]);
     }
+    //if cnum == 0 use key word search otherwise concept search
     if (cnum == 0) {
         n_search_terms(argv[2], terms, term_num);
     }
@@ -141,14 +142,12 @@ void build_index(const char * argument1, const char * argument2) {
     
     //count the number of file
     int file_number = 0;
-    
     // index_word store the word after stem and stopword process
     // posting_list sotre the posting list
     string index_word, posting_list;
     
     // use non-alphabet characters as delimiter
-    char delim[] = "~`1!2@3#4$5%6^7&8*9(0)_-+={[}]|\\:;\"'<,>.?/ \n";
-    
+    char delim[] = " ~`1!2@3#4$5%6^7&8*9(0)_-+={[}]\\:;\"\'<,>.?/\n\t\v\r\b\f ‘’“”|";
     /*
         read files in folder
      */
@@ -175,7 +174,6 @@ void build_index(const char * argument1, const char * argument2) {
                 //read each line and separate each word in line
                 while(fgets(readfile, k, file_in) != NULL) {
                     word = strtok(readfile, delim);
-                    
                     // change word to lower case, do Porter2Stemmer::stem process, and drop stopwords
                     // then store in map, count the frequence
                     while(word != NULL) {
