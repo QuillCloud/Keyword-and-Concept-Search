@@ -185,10 +185,6 @@ void build_index(const char * argument1, const char * argument2) {
                         }
                         index_word = word;
                         transform(index_word.begin(), index_word.end(), index_word.begin(), ::tolower);
-                        if (strlen(index_word.c_str()) < 3) {
-                            word = strtok(NULL, delim);
-                            continue;
-                        }
                         Porter2Stemmer::stem(index_word);
                         if (stopword_m.find(index_word) != stopword_m.end()) {
                             word = strtok(NULL, delim);
